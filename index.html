@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wrestling Waiter</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4a2c91">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #222;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            overflow: hidden;
+            border: 3px solid #fff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+        }
+        
+        #background {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://i.postimg.cc/50PGHsRw/sfondo.png');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        #player {
+            position: absolute;
+            width: 150px;
+            height: 200px;
+            background-image: url('https://i.postimg.cc/G23VhWqL/sanjana.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: bottom;
+            bottom: 50px;
+            left: 350px; /* Centrato orizzontalmente */
+        }
+        
+        .enemy {
+            position: absolute;
+            width: 150px;
+            height: 200px;
+            background-image: url('https://i.postimg.cc/6QfFKWVb/nemico.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: bottom;
+            bottom: 50px;
+        }
+        
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 18px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        #score-container {
+            margin-right: 20px;
+        }
+        
+        #level-container {
+            margin-right: 20px;
+        }
+        
+        #lives-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .heart {
+            color: #ff4757;
+            font-size: 24px;
+            margin-left: 5px;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            display: none;
+        }
+        
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #4a2c91, #ff4757);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto; /* Per consentire lo scorrimento se necessario */
+            max-height: 100%; /* Limita l'altezza al 100% del contenitore */
+        }
+        
+        #game-title {
+            font-size: 42px; /* Dimensione ridotta per adattarsi meglio */
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6);
+            animation: pulse 2s infinite;
+            color: #ffde59;
+        }
+        
+        #game-creator {
+            font-size: 18px; /* Dimensione leggermente ridotta */
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            line-height: 1.4;
+        }
+        
+        #character-display {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 15px; /* Ridotto per dare più spazio */
+        }
+        
+        #start-button, #restart-button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 20px;
+            background-color: #ffde59;
+            color: #4a2c91;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+            font-weight: bold;
+            z-index: 101; /* Assicura che il pulsante sia cliccabile */
+        }
+        
+        #start-button:hover, #restart-button:hover {
+            background-color: #fff;
+            transform: scale(1.08);
+        }
+        
+        .floating-points {
+            position: absolute;
+            color: yellow;
+            font-weight: bold;
+            font-size: 24px;
+            animation: float-up 1s forwards;
+            z-index: 10;
+        }
+        
+        @keyframes float-up {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        #character-img {
+            position: relative;
+            width: 100px; /* Dimensione ridotta */
+            height: 140px; /* Dimensione ridotta */
+            background-image: url('https://i.postimg.cc/G23VhWqL/sanjana.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: bottom;
+        }
+        
+        #enemy-img {
+            position: relative;
+            width: 100px; /* Dimensione ridotta */
+            height: 140px; /* Dimensione ridotta */
+            background-image: url('https://i.postimg.cc/6QfFKWVb/nemico.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: bottom;
+        }
+        
+        #instructions {
+            font-size: 16px;
+            text-align: center;
+            width: 100%;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            padding: 0 10px;
+            box-sizing: border-box;
+            margin-top: 15px;
+        }
+        
+        /* Crediti */
+        #credits {
+            font-size: 16px;
+            text-align: center;
+            margin-top: 10px;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        #additional-credits {
+            font-size: 14px;
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            max-width: 90%;
+            color: #ffde59;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="start-screen">
+            <h1 id="game-title">Wrestling Waiter</h1>
+            <p id="game-creator">Gioco creato da Sanjana Issen<br>Istituto Fermi Eredia</p>
+            <div id="character-display">
+                <div id="enemy-img"></div>
+                <div id="character-img"></div>
+            </div>
+            <div id="credits">Un gioco di abilità dove devi saltare sul nemico per guadagnare punti.<br>Ogni combo di salti aumenta il tuo punteggio!</div>
+            <div id="additional-credits">"PNRR – LA SCUOLA FUTURA"<br>"STEM e Multilinguismo a scuola: learning by doing"<br>Laboratorio co-curricolare<br>"Pensiero Computazionale per Creare e Apprendere"<br>Tutor: <b>Prof.ssa Russo Simona</b><br>Docente Esperto Formatore: <b>Ing. Azzarelli Giampiero</b></div>
+            <button id="start-button">INIZIA GIOCO</button>
+            <div id="instructions">Usa frecce ← → per muoverti, SPAZIO o click per saltare!</div>
+        </div>
+    
+        <div id="background"></div>
+        <div id="player"></div>
+        <div id="hud">
+            <div id="score-container">Punteggio: <span id="score">0</span></div>
+            <div id="level-container">Livello: <span id="level">1</span></div>
+            <div id="lives-container">Vite: 
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+                <span class="heart">❤️</span>
+            </div>
+        </div>
+        <div id="game-over">
+            <div>GAME OVER</div>
+            <div>Punteggio finale: <span id="final-score">0</span></div>
+            <button id="restart-button">Rigioca</button>
+        </div>
+    </div>
+
+    <script>
+
+ // Registra il Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then((registration) => {
+                    console.log('Service Worker registrato con successo:', registration);
+                })
+                .catch((error) => {
+                    console.log('Registrazione del Service Worker fallita:', error);
+                });
+        }
+
+        // Il tuo JavaScript esistente
+        // Elementi del gioco
+        const player = document.getElementById('player');
+        const scoreDisplay = document.getElementById('score');
+        const levelDisplay = document.getElementById('level');
+        const hearts = document.querySelectorAll('.heart');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const restartButton = document.getElementById('restart-button');
+        const gameContainer = document.getElementById('game-container');
+        const startScreen = document.getElementById('start-screen');
+        const startButton = document.getElementById('start-button');
+        
+        // Dimensioni e costanti
+        const PLAYER_HEIGHT = 200;
+        const JUMP_HEIGHT = PLAYER_HEIGHT * 2.5; // Altezza del salto 2.5 volte l'altezza del giocatore
+        
+        // Stato del gioco
+        let gameState = {
+            score: 0,
+            lives: 3,
+            playerX: 350, // Posizione iniziale del giocatore al centro
+            playerY: 50,  // Posizione iniziale dal basso
+            playerVelocityY: 0,
+            playerIsJumping: false,
+            isGameOver: false,
+            gameStarted: false,
+            combo: 0,
+            lastEnemyHit: false,
+            level: 1,
+            enemies: [],
+            baseEnemySpeed: 2,
+            keys: {
+                ArrowLeft: false,
+                ArrowRight: false,
+                Space: false
+            }
+        };
+        
+        // Costanti
+        const GRAVITY = 0.8;
+        const JUMP_POWER = Math.sqrt(2 * GRAVITY * JUMP_HEIGHT); // Calcolo fisicamente corretto per l'altezza di salto
+        const PLAYER_SPEED = 5;
+        const GROUND_LEVEL = 50;
+        const PLAYER_WIDTH = 150;
+        const ENEMY_WIDTH = 150;
+        const ENEMY_HEIGHT = 200;
+        
+        // Soglie per aumentare la difficoltà
+        const SPEED_INCREASE_THRESHOLD = 300; // Ogni 300 punti aumenta la velocità
+        const NEW_ENEMY_THRESHOLD = 500; // Ogni 500 punti aggiungi un nemico
+        
+        // Event Listeners
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'ArrowLeft') {
+                gameState.keys.ArrowLeft = true;
+            }
+            if (e.code === 'ArrowRight') {
+                gameState.keys.ArrowRight = true;
+            }
+            if (e.code === 'Space') {
+                gameState.keys.Space = true;
+                
+                // Inizia il gioco con lo spazio se siamo nella schermata iniziale
+                if (!gameState.gameStarted && startScreen.style.display !== 'none') {
+                    startGame();
+                } else if (gameState.gameStarted && !gameState.playerIsJumping) {
+                    jump();
+                }
+            }
+        });
+        
+        document.addEventListener('keyup', function(e) {
+            if (e.code === 'ArrowLeft') {
+                gameState.keys.ArrowLeft = false;
+            }
+            if (e.code === 'ArrowRight') {
+                gameState.keys.ArrowRight = false;
+            }
+            if (e.code === 'Space') {
+                gameState.keys.Space = false;
+            }
+        });
+        
+        // Click del mouse per saltare
+        gameContainer.addEventListener('click', function(e) {
+            // Controlla se il click è sul bottone di start o su un altro elemento della schermata iniziale
+            if (e.target.id === 'start-button' || e.target.id === 'restart-button' || !gameState.gameStarted) {
+                return; // Lascia che l'evento del bottone gestisca questo
+            }
+            
+            if (gameState.gameStarted && !gameState.playerIsJumping) {
+                jump();
+            }
+        });
+        
+        // Funzione per saltare
+        function jump() {
+            if (!gameState.playerIsJumping) {
+                gameState.playerVelocityY = JUMP_POWER;
+                gameState.playerIsJumping = true;
+            }
+        }
+        
+        // Funzione per creare un nemico
+        function createEnemy(position) {
+            const enemyElement = document.createElement('div');
+            enemyElement.className = 'enemy';
+            
+            // Imposta la posizione iniziale
+            const startX = position || (Math.random() > 0.5 ? -100 : gameContainer.offsetWidth + 100);
+            
+            const enemy = {
+                element: enemyElement,
+                x: startX,
+                y: GROUND_LEVEL,
+                speed: gameState.baseEnemySpeed
+            };
+            
+            // Aggiungi l'elemento al DOM
+            gameContainer.appendChild(enemyElement);
+            gameState.enemies.push(enemy);
+            
+            // Aggiorna la posizione visuale
+            updateEnemyPosition(enemy);
+            
+            return enemy;
+        }
+        
+        // Funzione per aggiornare la posizione visuale di un nemico
+        function updateEnemyPosition(enemy) {
+            enemy.element.style.left = enemy.x + 'px';
+            enemy.element.style.bottom = enemy.y + 'px';
+        }
+        
+        // Funzione per iniziare il gioco
+        function startGame() {
+            startScreen.style.display = 'none';
+            gameState.gameStarted = true;
+            
+            // Crea il primo nemico
+            createEnemy(600);
+            
+            gameLoop();
+        }
+        
+        // Bottone per iniziare il gioco
+        startButton.addEventListener('click', startGame);
+        
+        restartButton.addEventListener('click', resetGame);
+        
+        // Funzioni
+        function updatePlayer() {
+            // Movimento orizzontale
+            if (gameState.keys.ArrowLeft && gameState.playerX > 0) {
+                gameState.playerX -= PLAYER_SPEED;
+                player.style.transform = 'scaleX(-1)'; // Gira il giocatore a sinistra
+            }
+            if (gameState.keys.ArrowRight && gameState.playerX < gameContainer.offsetWidth - PLAYER_WIDTH) {
+                gameState.playerX += PLAYER_SPEED;
+                player.style.transform = 'scaleX(1)'; // Gira il giocatore a destra
+            }
+            
+            // Applicazione gravità e salto
+            gameState.playerY += gameState.playerVelocityY;
+            gameState.playerVelocityY -= GRAVITY;
+            
+            // Collisione con il terreno
+            if (gameState.playerY <= GROUND_LEVEL) {
+                gameState.playerY = GROUND_LEVEL;
+                gameState.playerVelocityY = 0;
+                gameState.playerIsJumping = false;
+            }
+            
+            // Aggiornamento posizione
+            player.style.left = gameState.playerX + 'px';
+            player.style.bottom = gameState.playerY + 'px';
+        }
+        
+        function updateEnemies() {
+            gameState.enemies.forEach(enemy => {
+                // Determina la direzione verso il giocatore
+                if (gameState.playerX < enemy.x) {
+                    enemy.x -= enemy.speed;
+                    enemy.element.style.transform = 'scaleX(-1)'; // Gira il nemico a sinistra
+                } else {
+                    enemy.x += enemy.speed;
+                    enemy.element.style.transform = 'scaleX(1)'; // Gira il nemico a destra
+                }
+                
+                // Aggiornamento posizione
+                updateEnemyPosition(enemy);
+                
+                // Controlla la collisione
+                checkEnemyCollision(enemy);
+            });
+        }
+        
+        function checkEnemyCollision(enemy) {
+            // Controllo se il giocatore è sopra il nemico (salto riuscito)
+            const playerBottom = gameState.playerY;
+            const playerTop = playerBottom + PLAYER_HEIGHT;
+            const playerLeft = gameState.playerX;
+            const playerRight = playerLeft + PLAYER_WIDTH;
+            
+            const enemyBottom = enemy.y;
+            const enemyTop = enemyBottom + ENEMY_HEIGHT;
+            const enemyLeft = enemy.x;
+            const enemyRight = enemyLeft + ENEMY_WIDTH;
+            
+            const isColliding = 
+                playerRight > enemyLeft + 30 && 
+                playerLeft < enemyRight - 30 && 
+                playerBottom < enemyTop && 
+                playerTop > enemyBottom;
+            
+            // Controllo se il giocatore sta saltando sul nemico
+            if (isColliding) {
+                if (gameState.playerVelocityY < 0 && playerBottom > enemyBottom + ENEMY_HEIGHT - 40) {
+                    // Salto riuscito - il giocatore è sopra il nemico
+                    let pointsEarned = 100;
+                    
+                    if (gameState.lastEnemyHit) {
+                        gameState.combo++;
+                        pointsEarned += 50 * gameState.combo;
+                    } else {
+                        gameState.combo = 0;
+                    }
+                    
+                    gameState.score += pointsEarned;
+                    
+                    // Rimbalzo dopo aver saltato sul nemico
+                    gameState.playerVelocityY = JUMP_POWER * 0.7;
+                    
+                    // Visualizza i punti guadagnati
+                    showFloatingPoints(pointsEarned, enemy.x, enemy.y + ENEMY_HEIGHT);
+                    
+                    // Imposta il flag per la combo
+                    gameState.lastEnemyHit = true;
+                    
+                    // Aumenta la difficoltà in base al punteggio
+                    checkDifficultyProgression();
+                    
+                    // Sposta il nemico in una posizione casuale
+                    resetEnemyPosition(enemy);
+                } else {
+                    // Collisione laterale - il giocatore perde una vita
+                    if (!gameState.lastEnemyHit) {
+                        gameState.lives--;
+                        updateLives();
+                        
+                        if (gameState.lives <= 0) {
+                            endGame();
+                        } else {
+                            // Breve invulnerabilità
+                            player.style.opacity = 0.5;
+                            setTimeout(() => {
+                                player.style.opacity = 1;
+                            }, 1000);
+                            
+                            // Allontana il nemico
+                            resetEnemyPosition(enemy);
+                        }
+                    }
+                }
+            }
+        }
+        
+        function updateLives() {
+            // Aggiorna la visualizzazione dei cuori in base alle vite rimaste
+            for (let i = 0; i < hearts.length; i++) {
+                if (i < gameState.lives) {
+                    hearts[i].innerHTML = "❤️";
+                    hearts[i].style.opacity = 1;
+                } else {
+                    hearts[i].innerHTML = "💔";
+                    hearts[i].style.opacity = 0.5;
+                }
+            }
+        }
+        
+        function checkDifficultyProgression() {
+            // Calcola il livello di difficoltà in base al punteggio
+            const oldLevel = gameState.level;
+            const speedLevel = Math.floor(gameState.score / SPEED_INCREASE_THRESHOLD) + 1;
+            const enemyLevel = Math.floor(gameState.score / NEW_ENEMY_THRESHOLD) + 1;
+            
+            // Il livello è il valore più alto tra i due
+            gameState.level = Math.max(speedLevel, enemyLevel);
+            
+            // Aggiorna la velocità dei nemici
+            if (speedLevel > oldLevel || (gameState.level > oldLevel && gameState.level % 2 === 0)) {
+                gameState.baseEnemySpeed = 2 + (speedLevel - 1) * 0.5;
+                
+                // Aggiorna la velocità di tutti i nemici
+                gameState.enemies.forEach(enemy => {
+                    enemy.speed = gameState.baseEnemySpeed;
+                });
+                
+                // Mostra notifica di aumento velocità
+                showNotification("Velocità nemici aumentata!");
+            }
+            
+            // Aggiungi nuovi nemici ogni 500 punti
+            if (enemyLevel > gameState.enemies.length) {
+                createEnemy();
+                showNotification("Nuovo nemico in arrivo!");
+            }
+            
+            // Aggiorna il display del livello
+            levelDisplay.textContent = gameState.level;
+        }
+        
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'floating-points';
+            notification.textContent = message;
+            notification.style.left = '50%';
+            notification.style.top = '20%';
+            notification.style.transform = 'translateX(-50%)';
+            notification.style.color = '#ffde59';
+            
+            gameContainer.appendChild(notification);
+            
+            // Rimuovi la notifica dopo l'animazione
+            setTimeout(() => {
+                gameContainer.removeChild(notification);
+            }, 1500);
+        }
+        
+        function resetEnemyPosition(enemy) {
+            // Posiziona il nemico a destra o sinistra dello schermo
+            enemy.x = Math.random() > 0.5 ? -100 : gameContainer.offsetWidth + 100;
+            enemy.y = GROUND_LEVEL;
+            updateEnemyPosition(enemy);
+        }
+        
+        function showFloatingPoints(points, x, y) {
+            const pointsElement = document.createElement('div');
+            pointsElement.className = 'floating-points';
+            pointsElement.textContent = '+' + points;
+            pointsElement.style.left = x + 'px';
+            pointsElement.style.bottom = y + 'px';
+            
+            gameContainer.appendChild(pointsElement);
+            
+            // Rimuovi l'elemento dopo l'animazione
+            setTimeout(() => {
+                gameContainer.removeChild(pointsElement);
+            }, 1000);
+        }
+        
+        function updateScore() {
+            scoreDisplay.textContent = gameState.score;
+        }
+        
+        function endGame() {
+            gameState.isGameOver = true;
+            finalScoreDisplay.textContent = gameState.score;
+            gameOverScreen.style.display = 'flex';
+        }
+        
+        function resetGame() {
+            // Rimuovi tutti i nemici esistenti
+            gameState.enemies.forEach(enemy => {
+                gameContainer.removeChild(enemy.element);
+            });
+            
+            gameState = {
+                score: 0,
+                lives: 3,
+                playerX: 350, // Posizione centrale
+                playerY: 50,
+                playerVelocityY: 0,
+                playerIsJumping: false,
+                isGameOver: false,
+                gameStarted: true,
+                combo: 0,
+                lastEnemyHit: false,
+                level: 1,
+                enemies: [],
+                baseEnemySpeed: 2,
+                keys: {
+                    ArrowLeft: false,
+                    ArrowRight: false,
+                    Space: false
+                }
+            };
+            
+            // Crea il primo nemico
+            createEnemy(600);
+            
+            scoreDisplay.textContent = '0';
+            levelDisplay.textContent = '1';
+            updateLives();
+            gameOverScreen.style.display = 'none';
+            
+            player.style.left = gameState.playerX + 'px';
+            player.style.bottom = gameState.playerY + 'px';
+            
+            gameLoop();
+        }
+        
+        function gameLoop() {
+            if (!gameState.gameStarted || gameState.isGameOver) return;
+            
+            updatePlayer();
+            updateEnemies();
+            gameState.lastEnemyHit = false; // Resetta il flag tra collisioni
+            updateScore();
+            
+            requestAnimationFrame(gameLoop);
+        }
+    </script>
+</body>
+</html>
